@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生成绩管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button.secondary {
+            background-color: #2196F3;
+        }
+        button.secondary:hover {
+            background-color: #0b7dda;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        .btn-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .alert.success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            display: block;
+        }
+        .alert.error {
+            background-color: #f2dede;
+            color: #a94442;
+            display: block;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .stat-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            width: 200px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .import-hint {
+            color: #666;
+            margin-top: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 登录页面 -->
+        <div id="loginPage" class="page active">
+            <h1>学生成绩管理系统 - 登录</h1>
+            <div class="alert error" id="loginError"></div>
+            <div class="form-group">
+                <label for="loginUsername">用户名</label>
+                <input type="text" id="loginUsername" placeholder="请输入用户名" value="admin">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">密码</label>
+                <input type="password" id="loginPassword" placeholder="请输入密码" value="123456">
+            </div>
+            <div class="btn-group">
+                <button onclick="login()">登录</button>
+                <button class="secondary" onclick="showPage('registerPage')">注册</button>
+            </div>
+        </div>
+
+        <!-- 注册页面 -->
+        <div id="registerPage" class="page">
+            <h1>学生成绩管理系统 - 注册</h1>
+            <div class="alert success" id="registerSuccess"></div>
+            <div class="alert error" id="registerError"></div>
+            <div class="form-group">
+                <label for="regUsername">用户名</label>
+                <input type="text" id="regUsername" placeholder="请设置用户名">
+            </div>
+            <div class="form-group">
+                <label for="regPassword">密码</label>
+                <input type="password" id="regPassword" placeholder="请设置密码">
+            </div>
+            <div class="form-group">
+                <label for="regConfirmPwd">确认密码</label>
+                <input type="password" id="regConfirmPwd" placeholder="请再次输入密码">
+            </div>
+            <div class="btn-group">
+                <button onclick="register()">注册</button>
+                <button class="secondary" onclick="showPage('loginPage')">返回登录</button>
+            </div>
+        </div>
+
+        <!-- 主页面 -->
+        <div id="mainPage" class="page">
+            <h1>学生成绩管理系统</h1>
+            <div class="btn-group">
+                <button onclick="showPage('addScorePage')">手动添加成绩</button>
+                <button onclick="showPage('importExcelPage')">Excel导入成绩</button>
+                <button onclick="showPage('changePwdPage')">修改密码</button>
+                <button onclick="showPage('statsPage')">成绩统计</button>
+                <button onclick="showPage('filterPage')">成绩筛选</button>
+                <button class="secondary" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+
+        <!-- 手动添加成绩页面 -->
+        <div id="addScorePage" class="page">
+            <h2>手动添加学生成绩</h2>
+            <div class="alert success" id="addScoreSuccess"></div>
+            <div class="alert error" id="addScoreError"></div>
+            <div class="form-group">
+                <label for="studentId">学号</label>
+                <input type="text" id="studentId" placeholder="请输入学号（如：001）">
+            </div>
+            <div class="form-group">
+                <label for="studentName">姓名</label>
+                <input type="text" id="studentName" placeholder="请输入姓名">
+            </div>
+            <div class="form-group">
+                <label for="studentClass">班级</label>
+                <select id="studentClass">
+                    <option value="1班">电子信息工程1班</option>
+                    <option value="2班">电子信息工程2班</option>
+                    <option value="3班">电子信息工程3班</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="studentSubject">科目</label>
+                <input type="text" id="studentSubject" placeholder="请输入科目（如：高等数学）">
+            </div>
+            <div class="form-group">
+                <label for="studentScore">成绩</label>
+                <input type="number" id="studentScore" placeholder="请输入成绩（0-100）" min="0" max="100">
+            </div>
+            <div class="btn-group">
+                <button onclick="addScore()">添加成绩</button>
+                <button class="secondary" onclick="showPage('mainPage')">返回主页</button>
+            </div>
+        </div>
+
+        <!-- Excel导入成绩页面 -->
+        <div id="importExcelPage" class="page">
+            <h2>Excel导入成绩</h2>
+            <div class="alert success" id="excelSuccess"></div>
+            <div class="alert error" id="excelError"></div>
+            <div class="form-group">
+                <label for="excelFile">选择Excel文件</label>
+                <input type="file" id="excelFile" accept=".xlsx, .xls">
+                <p class="import-hint">提示：Excel文件需包含列名：学号、姓名、班级、科目、成绩</p>
+            </div>
+            <div class="btn-group">
+                <button onclick="importFromExcel()">导入成绩</button>
+                <button class="secondary" onclick="showPage('mainPage')">返回主页</button>
+            </div>
+        </div>
+
+        <!-- 修改密码页面 -->
+        <div id="changePwdPage" class="page">
+            <h2>修改密码</h2>
+            <div class="alert success" id="pwdSuccess"></div>
+            <div class="alert error" id="pwdError"></div>
+            <div class="form-group">
+                <label for="oldPwd">原密码</label>
+                <input type="password" id="oldPwd" placeholder="请输入原密码">
+            </div>
+            <div class="form-group">
+                <label for="newPwd">新密码</label>
+                <input type="password" id="newPwd" placeholder="请输入新密码">
+            </div>
+            <div class="form-group">
+                <label for="confirmNewPwd">确认新密码</label>
+                <input type="password" id="confirmNewPwd" placeholder="请再次输入新密码">
+            </div>
+            <div class="btn-group">
+                <button onclick="changePassword()">保存修改</button>
+                <button class="secondary" onclick="showPage('mainPage')">返回主页</button>
+            </div>
+        </div>
+
+        <!-- 成绩统计页面 -->
+        <div id="statsPage" class="page">
+            <h2>班级成绩统计</h2>
+            <div class="form-group">
+                <label for="classSelect">选择班级</label>
+                <select id="classSelect">
+                    <option value="all">所有班级</option>
+                    <option value="1班">电子信息工程1班</option>
+                    <option value="2班">电子信息工程2班</option>
+                    <option value="3班">电子信息工程3班</option>
+                </select>
+            </div>
+            <button onclick="calculateStats()">查询统计</button>
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>平均分</h3>
+                    <div class="value" id="avgScore">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>优秀人数(≥90)</h3>
+                    <div class="value" id="excellentCount">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>不合格人数(<60)</h3>
+                    <div class="value" id="failCount">--</div>
+                </div>
+            </div>
+            <h3>各科成绩详情</h3>
+            <table id="statsTable">
+                <thead>
+                    <tr>
+                        <th>科目</th>
+                        <th>平均分</th>
+                        <th>最高分</th>
+                        <th>最低分</th>
+                    </tr>
+                </thead>
+                <tbody id="statsTableBody">
+                    <tr><td colspan="4">请选择班级并点击查询统计</td></tr>
+                </tbody>
+            </table>
+            <div class="btn-group">
+                <button class="secondary" onclick="showPage('mainPage')">返回主页</button>
+            </div>
+        </div>
+
+        <!-- 成绩筛选页面 -->
+        <div id="filterPage" class="page">
+            <h2>成绩筛选</h2>
+            <div class="form-group">
+                <label for="filterType">筛选类型</label>
+                <select id="filterType">
+                    <option value="excellent">优秀学生(≥90)</option>
+                    <option value="fail">不合格学生(<60)</option>
+                </select>
+            </div>
+            <button onclick="filterStudents()">查询</button>
+            <table id="filterTable">
+                <thead>
+                    <tr>
+                        <th>学号</th>
+                        <th>姓名</th>
+                        <th>班级</th>
+                        <th>科目</th>
+                        <th>成绩</th>
+                    </tr>
+                </thead>
+                <tbody id="filterTableBody">
+                    <tr><td colspan="5">请选择筛选类型并点击查询</td></tr>
+                </tbody>
+            </table>
+            <div class="btn-group">
+                <button class="secondary" onclick="showPage('mainPage')">返回主页</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Excel处理库 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        // 模拟用户数据
+        const users = [
+            { username: 'admin', password: '123456' }
+        ];
+        // 模拟成绩数据
+        const scoreData = [
+            { id: '001', name: '张三', class: '1班', subject: '高等数学', score: 85 },
+            { id: '002', name: '李四', class: '1班', subject: '高等数学', score: 92 },
+            { id: '003', name: '王五', class: '1班', subject: '高等数学', score: 58 },
+            { id: '004', name: '赵六', class: '2班', subject: 'Python编程', score: 88 },
+            { id: '005', name: '孙七', class: '2班', subject: 'Python编程', score: 45 },
+            { id: '006', name: '周八', class: '3班', subject: '计算机网络', score: 95 },
+            { id: '007', name: '吴九', class: '3班', subject: '计算机网络', score: 76 },
+            { id: '008', name: '郑十', class: '3班', subject: '计算机网络', score: 59 }
+        ];
+        let currentUser = null;
+
+        // 页面切换
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            // 清空提示框
+            document.querySelectorAll('.alert').forEach(alert => alert.style.display = 'none');
+        }
+
+        // 登录功能
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const errorEl = document.getElementById('loginError');
+
+            if (!username || !password) {
+                errorEl.textContent = '用户名和密码不能为空';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                currentUser = user;
+                showPage('mainPage');
+            } else {
+                errorEl.textContent = '用户名或密码错误';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // 注册功能
+        function register() {
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const confirmPwd = document.getElementById('regConfirmPwd').value.trim();
+            const successEl = document.getElementById('registerSuccess');
+            const errorEl = document.getElementById('registerError');
+
+            if (!username || !password || !confirmPwd) {
+                errorEl.textContent = '所有字段不能为空';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (password !== confirmPwd) {
+                errorEl.textContent = '两次输入的密码不一致';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (users.some(u => u.username === username)) {
+                errorEl.textContent = '用户名已存在';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            users.push({ username, password });
+            successEl.textContent = '注册成功，请返回登录';
+            successEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            // 清空表单
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirmPwd').value = '';
+        }
+
+        // 退出登录
+        function logout() {
+            currentUser = null;
+            showPage('loginPage');
+            // 清空登录表单
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        // 修改密码
+        function changePassword() {
+            const oldPwd = document.getElementById('oldPwd').value.trim();
+            const newPwd = document.getElementById('newPwd').value.trim();
+            const confirmNewPwd = document.getElementById('confirmNewPwd').value.trim();
+            const successEl = document.getElementById('pwdSuccess');
+            const errorEl = document.getElementById('pwdError');
+
+            if (!oldPwd || !newPwd || !confirmNewPwd) {
+                errorEl.textContent = '所有字段不能为空';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (oldPwd !== currentUser.password) {
+                errorEl.textContent = '原密码输入错误';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (newPwd !== confirmNewPwd) {
+                errorEl.textContent = '两次输入的新密码不一致';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            currentUser.password = newPwd;
+            successEl.textContent = '密码修改成功';
+            successEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            // 清空表单
+            document.getElementById('oldPwd').value = '';
+            document.getElementById('newPwd').value = '';
+            document.getElementById('confirmNewPwd').value = '';
+        }
+
+        // 手动添加成绩
+        function addScore() {
+            const id = document.getElementById('studentId').value.trim();
+            const name = document.getElementById('studentName').value.trim();
+            const className = document.getElementById('studentClass').value;
+            const subject = document.getElementById('studentSubject').value.trim();
+            const score = parseInt(document.getElementById('studentScore').value);
+            const successEl = document.getElementById('addScoreSuccess');
+            const errorEl = document.getElementById('addScoreError');
+
+            // 表单验证
+            if (!id || !name || !subject || isNaN(score) || score < 0 || score > 100) {
+                errorEl.textContent = '所有字段均为必填项，成绩请输入0-100之间的数字';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            // 检查学号+科目是否已存在（避免重复添加同一学生的同一科目成绩）
+            const isDuplicate = scoreData.some(item => item.id === id && item.subject === subject);
+            if (isDuplicate) {
+                errorEl.textContent = '该学生该科目的成绩已存在，请勿重复添加';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            // 添加新成绩
+            scoreData.push({
+                id: id,
+                name: name,
+                class: className,
+                subject: subject,
+                score: score
+            });
+
+            successEl.textContent = '成绩添加成功';
+            successEl.style.display = 'block';
+            errorEl.style.display = 'none';
+
+            // 清空表单
+            document.getElementById('studentId').value = '';
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentSubject').value = '';
+            document.getElementById('studentScore').value = '';
+        }
+
+        // Excel导入成绩
+        function importFromExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            const successEl = document.getElementById('excelSuccess');
+            const errorEl = document.getElementById('excelError');
+
+            if (!file) {
+                errorEl.textContent = '请选择Excel文件';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            // 验证文件类型
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            if (!['xlsx', 'xls'].includes(fileExt)) {
+                errorEl.textContent = '请选择Excel文件（.xlsx或.xls格式）';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+                    // 验证Excel数据格式（必须包含指定列名）
+                    const requiredFields = ['学号', '姓名', '班级', '科目', '成绩'];
+                    if (jsonData.length === 0) {
+                        throw new Error('Excel文件中没有数据');
+                    }
+                    const firstRowKeys = Object.keys(jsonData[0]);
+                    for (const field of requiredFields) {
+                        if (!firstRowKeys.includes(field)) {
+                            throw new Error(`Excel文件缺少必填列：${field}`);
+                        }
+                    }
+
+                    // 导入数据处理
+                    let importedCount = 0;
+                    let duplicateCount = 0;
+                    for (const item of jsonData) {
+                        const id = item['学号'].toString().trim();
+                        const name = item['姓名'].trim();
+                        const className = item['班级'].trim();
+                        const subject = item['科目'].trim();
+                        const score = parseInt(item['成绩']);
+
+                        // 跳过空行或无效数据
+                        if (!id || !name || !className || !subject || isNaN(score) || score < 0 || score > 100) {
+                            console.warn('跳过无效数据:', item);
+                            continue;
+                        }
+
+                        // 检查重复（学号+科目唯一）
+                        const isDuplicate = scoreData.some(
+                            s => s.id === id && s.subject === subject
+                        );
+                        if (!isDuplicate) {
+                            scoreData.push({ id, name, class: className, subject, score });
+                            importedCount++;
+                        } else {
+                            duplicateCount++;
+                        }
+                    }
+
+                    // 显示导入结果
+                    if (importedCount > 0) {
+                        successEl.textContent = `成功导入 ${importedCount} 条成绩数据，跳过 ${duplicateCount} 条重复数据`;
+                        successEl.style.display = 'block';
+                    } else {
+                        successEl.textContent = `没有新数据导入，跳过 ${duplicateCount} 条重复数据`;
+                        successEl.style.display = 'block';
+                    }
+                    errorEl.style.display = 'none';
+
+                } catch (error) {
+                    errorEl.textContent = `导入失败: ${error.message}`;
+                    errorEl.style.display = 'block';
+                    successEl.style.display = 'none';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 成绩统计计算
+        function calculateStats() {
+            const selectedClass = document.getElementById('classSelect').value;
+            let filteredScores = scoreData;
+
+            // 按班级筛选
+            if (selectedClass !== 'all') {
+                filteredScores = scoreData.filter(item => item.class === selectedClass);
+            }
+
+            if (filteredScores.length === 0) {
+                document.getElementById('avgScore').textContent = '0';
+                document.getElementById('excellentCount').textContent = '0';
+                document.getElementById('failCount').textContent = '0';
+                document.getElementById('statsTableBody').innerHTML = '<tr><td colspan="4">暂无数据</td></tr>';
+                return;
+            }
+
+            // 计算总分和平均分
+            const totalScore = filteredScores.reduce((sum, item) => sum + item.score, 0);
+            const avgScore = (totalScore / filteredScores.length).toFixed(1);
+
+            // 统计优秀和不合格人数
+            const excellentCount = filteredScores.filter(item => item.score >= 90).length;
+            const failCount = filteredScores.filter(item => item.score < 60).length;
+
+            // 按科目分组统计
+            const subjectStats = {};
+            filteredScores.forEach(item => {
+                if (!subjectStats[item.subject]) {
+                    subjectStats[item.subject] = {
+                        scores: [],
+                        avg: 0,
+                        max: 0,
+                        min: 100
+                    };
+                }
+                subjectStats[item.subject].scores.push(item.score);
+            });
+
+            // 计算各科统计数据
+            Object.keys(subjectStats).forEach(subject => {
+                const scores = subjectStats[subject].scores;
+                subjectStats[subject].avg = (scores.reduce((sum, s) => sum + s, 0) / scores.length).toFixed(1);
+                subjectStats[subject].max = Math.max(...scores);
+                subjectStats[subject].min = Math.min(...scores);
+            });
+
+            // 更新页面数据
+            document.getElementById('avgScore').textContent = avgScore;
+            document.getElementById('excellentCount').textContent = excellentCount;
+            document.getElementById('failCount').textContent = failCount;
+
+            // 生成表格数据
+            let tableHtml = '';
+            Object.keys(subjectStats).forEach(subject => {
+                const stats = subjectStats[subject];
+                tableHtml += `
+                    <tr>
+                        <td>${subject}</td>
+                        <td>${stats.avg}</td>
+                        <td>${stats.max}</td>
+                        <td>${stats.min}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('statsTableBody').innerHTML = tableHtml;
+        }
+
+        // 学生成绩筛选
+        function filterStudents() {
+            const filterType = document.getElementById('filterType').value;
+            let filteredStudents = [];
+
+            if (filterType === 'excellent') {
+                filteredStudents = scoreData.filter(item => item.score >= 90);
+            } else if (filterType === 'fail') {
+                filteredStudents = scoreData.filter(item => item.score < 60);
+            }
+
+            // 生成表格数据
+            let tableHtml = '';
+            if (filteredStudents.length === 0) {
+                tableHtml = `<tr><td colspan="5">暂无${filterType === 'excellent' ? '优秀' : '不合格'}学生</td></tr>`;
+            } else {
+                filteredStudents.forEach(student => {
+                    tableHtml += `
+                        <tr>
+                            <td>${student.id}</td>
+                            <td>${student.name}</td>
+                            <td>${student.class}</td>
+                            <td>${student.subject}</td>
+                            <td>${student.score}</td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('filterTableBody').innerHTML = tableHtml;
+        }
+    </script>
+</body>
+</html>
